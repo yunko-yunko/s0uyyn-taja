@@ -2,3 +2,10 @@
 .pending { color: gray; }
 .correct { color: purple; }
 .incorrect { color: red; }
+
+.stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stats p { margin: 0; }
