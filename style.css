@@ -1,0 +1,4 @@
+#sentence { white-space: pre-wrap; }
+.pending { color: gray; }
+.correct { color: purple; }
+.incorrect { color: red; }
