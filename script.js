@@ -58,6 +58,46 @@ const typingField = document.querySelector(".typing-field");
 const chatHistory = document.getElementById("chat-history");
 const themeToggle = document.getElementById("theme-toggle");
 const textMeasureContext = document.createElement("canvas").getContext("2d");
+const keyboardRows = [...document.querySelectorAll(".keyboard .typing-zone")];
+const keyCodesByRow = [
+  ["Digit1", "Digit2", "Digit3", "Digit4", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9", "Digit0"],
+  ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP"],
+  ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL"],
+  ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM"],
+  ["Shift", "Space", "Enter"],
+];
+const koreanLayout = {
+  KeyQ: "ㅂ", KeyW: "ㅈ", KeyE: "ㄷ", KeyR: "ㄱ", KeyT: "ㅅ",
+  KeyY: "ㅛ", KeyU: "ㅕ", KeyI: "ㅑ", KeyO: "ㅐ", KeyP: "ㅔ",
+  KeyA: "ㅁ", KeyS: "ㄴ", KeyD: "ㅇ", KeyF: "ㄹ", KeyG: "ㅎ",
+  KeyH: "ㅗ", KeyJ: "ㅓ", KeyK: "ㅏ", KeyL: "ㅣ",
+  KeyZ: "ㅋ", KeyX: "ㅌ", KeyC: "ㅊ", KeyV: "ㅍ", KeyB: "ㅠ", KeyN: "ㅜ", KeyM: "ㅡ",
+};
+const shiftedKoreanLayout = {
+  ...koreanLayout,
+  KeyQ: "ㅃ", KeyW: "ㅉ", KeyE: "ㄸ", KeyR: "ㄲ", KeyT: "ㅆ", KeyO: "ㅒ", KeyP: "ㅖ",
+};
+const englishLayout = {
+  Digit1: "1", Digit2: "2", Digit3: "3", Digit4: "4", Digit5: "5",
+  Digit6: "6", Digit7: "7", Digit8: "8", Digit9: "9", Digit0: "0",
+  ...Object.fromEntries("QWERTYUIOPASDFGHJKLZXCVBNM".split("").map((letter) => ["Key" + letter, letter.toLowerCase()])),
+};
+const shiftedEnglishLayout = {
+  ...Object.fromEntries(Object.entries(englishLayout).map(([code, value]) => [code, /^[a-z]$/.test(value) ? value.toUpperCase() : value])),
+  Digit1: "!", Digit2: "@", Digit3: "#", Digit4: "$", Digit5: "%",
+  Digit6: "^", Digit7: "&", Digit8: "*", Digit9: "(", Digit0: ")",
+};
+const initialIndex = { "ㄱ": 0, "ㄲ": 1, "ㄴ": 2, "ㄷ": 3, "ㄸ": 4, "ㄹ": 5, "ㅁ": 6, "ㅂ": 7, "ㅃ": 8, "ㅅ": 9, "ㅆ": 10, "ㅇ": 11, "ㅈ": 12, "ㅉ": 13, "ㅊ": 14, "ㅋ": 15, "ㅌ": 16, "ㅍ": 17, "ㅎ": 18 };
+const medialIndex = { "ㅏ": 0, "ㅐ": 1, "ㅑ": 2, "ㅒ": 3, "ㅓ": 4, "ㅔ": 5, "ㅕ": 6, "ㅖ": 7, "ㅗ": 8, "ㅘ": 9, "ㅙ": 10, "ㅚ": 11, "ㅛ": 12, "ㅜ": 13, "ㅝ": 14, "ㅞ": 15, "ㅟ": 16, "ㅠ": 17, "ㅡ": 18, "ㅢ": 19, "ㅣ": 20 };
+const finalIndex = { "": 0, "ㄱ": 1, "ㄲ": 2, "ㄳ": 3, "ㄴ": 4, "ㄵ": 5, "ㄶ": 6, "ㄷ": 7, "ㄹ": 8, "ㄺ": 9, "ㄻ": 10, "ㄼ": 11, "ㄽ": 12, "ㄾ": 13, "ㄿ": 14, "ㅀ": 15, "ㅁ": 16, "ㅂ": 17, "ㅄ": 18, "ㅅ": 19, "ㅆ": 20, "ㅇ": 21, "ㅈ": 22, "ㅊ": 23, "ㅋ": 24, "ㅌ": 25, "ㅍ": 26, "ㅎ": 27 };
+const finalJamo = Object.keys(finalIndex);
+const medialJamo = Object.keys(medialIndex);
+const combineMedial = { "ㅗㅏ": "ㅘ", "ㅗㅐ": "ㅙ", "ㅗㅣ": "ㅚ", "ㅜㅓ": "ㅝ", "ㅜㅔ": "ㅞ", "ㅜㅣ": "ㅟ", "ㅡㅣ": "ㅢ" };
+const splitFinal = { "ㄳ": ["ㄱ", "ㅅ"], "ㄵ": ["ㄴ", "ㅈ"], "ㄶ": ["ㄴ", "ㅎ"], "ㄺ": ["ㄹ", "ㄱ"], "ㄻ": ["ㄹ", "ㅁ"], "ㄼ": ["ㄹ", "ㅂ"], "ㄽ": ["ㄹ", "ㅅ"], "ㄾ": ["ㄹ", "ㅌ"], "ㄿ": ["ㄹ", "ㅍ"], "ㅄ": ["ㅂ", "ㅅ"] };
+const virtualKeys = new Map();
+let keyboardLanguage = "ko";
+let virtualShift = false;
+let languageKey;
 const replies = [
   "놀리지 마세요..",
   "이제 그냥 읽씹할게요",
@@ -279,6 +319,207 @@ function playTypingSound() {
   sound.start();
 }
 
+function composeSyllable(initial, medial, final = "") {
+  return String.fromCharCode(0xac00 + ((initialIndex[initial] * 21) + medialIndex[medial]) * 28 + finalIndex[final]);
+}
+
+function splitSyllable(character) {
+  const code = character?.codePointAt(0);
+  if (!code || code < 0xac00 || code > 0xd7a3) return null;
+
+  const offset = code - 0xac00;
+  return {
+    initial: Object.keys(initialIndex)[Math.floor(offset / 588)],
+    medial: medialJamo[Math.floor((offset % 588) / 28)],
+    final: finalJamo[offset % 28],
+  };
+}
+
+function updateVirtualInput(value, caret, data) {
+  typingInput.value = value;
+  typingInput.setSelectionRange(caret, caret);
+  const inputEvent = typeof InputEvent === "function"
+    ? new InputEvent("input", { bubbles: true, inputType: "insertText", data })
+    : new Event("input", { bubbles: true });
+  typingInput.dispatchEvent(inputEvent);
+  typingInput.focus({ preventScroll: true });
+}
+
+function insertKoreanJamo(jamo) {
+  const start = typingInput.selectionStart;
+  const end = typingInput.selectionEnd;
+  const before = typingInput.value.slice(0, start);
+  const after = typingInput.value.slice(end);
+  const characters = Array.from(before);
+  const previous = characters.pop();
+  const base = characters.join("");
+  const syllable = splitSyllable(previous);
+
+  if (medialJamo.includes(jamo)) {
+    if (initialIndex[previous] !== undefined) {
+      const nextBefore = base + composeSyllable(previous, jamo);
+      updateVirtualInput(nextBefore + after, nextBefore.length, jamo);
+      return;
+    }
+
+    if (syllable && !syllable.final) {
+      const combined = combineMedial[syllable.medial + jamo];
+      if (combined) {
+        const nextBefore = base + composeSyllable(syllable.initial, combined);
+        updateVirtualInput(nextBefore + after, nextBefore.length, jamo);
+        return;
+      }
+    }
+
+    if (syllable?.final) {
+      const [remainingFinal, nextInitial] = splitFinal[syllable.final] ?? ["", syllable.final];
+      const nextBefore = base
+        + composeSyllable(syllable.initial, syllable.medial, remainingFinal)
+        + composeSyllable(nextInitial, jamo);
+      updateVirtualInput(nextBefore + after, nextBefore.length, jamo);
+      return;
+    }
+
+    const nextBefore = before + jamo;
+    updateVirtualInput(nextBefore + after, nextBefore.length, jamo);
+    return;
+  }
+
+  if (syllable && !syllable.final && finalIndex[jamo] !== undefined) {
+    const nextBefore = base + composeSyllable(syllable.initial, syllable.medial, jamo);
+    updateVirtualInput(nextBefore + after, nextBefore.length, jamo);
+    return;
+  }
+
+  const nextBefore = before + jamo;
+  updateVirtualInput(nextBefore + after, nextBefore.length, jamo);
+}
+
+function insertVirtualText(text) {
+  const start = typingInput.selectionStart;
+  const end = typingInput.selectionEnd;
+  const value = typingInput.value;
+  const nextValue = value.slice(0, start) + text + value.slice(end);
+  updateVirtualInput(nextValue, start + text.length, text);
+}
+
+function activeVirtualLayout() {
+  const latin = virtualShift ? shiftedEnglishLayout : englishLayout;
+  if (keyboardLanguage === "en") return latin;
+  return { ...latin, ...(virtualShift ? shiftedKoreanLayout : koreanLayout) };
+}
+
+function setKeyboardLanguage(language, resetShift = true) {
+  keyboardLanguage = language;
+  if (resetShift) virtualShift = false;
+  const layout = activeVirtualLayout();
+
+  virtualKeys.forEach((button, code) => {
+    if (code === "Shift") {
+      button.textContent = "Shift";
+      return;
+    }
+    if (code === "Enter") {
+      button.textContent = "enter";
+      return;
+    }
+    if (code === "Space") {
+      button.textContent = "space";
+      return;
+    }
+    button.textContent = layout[code] ?? "";
+  });
+
+  const shiftKey = virtualKeys.get("Shift");
+  shiftKey?.classList.toggle("is-pressed", virtualShift);
+  shiftKey?.classList.toggle("is-shifted", virtualShift);
+  shiftKey?.setAttribute("aria-pressed", String(virtualShift));
+  languageKey?.setAttribute("aria-pressed", String(keyboardLanguage === "ko"));
+  languageKey?.setAttribute("aria-label", keyboardLanguage === "ko" ? "한글 키보드, 영어로 전환" : "영어 키보드, 한글로 전환");
+  if (languageKey) languageKey.textContent = "한/영";
+}
+
+function toggleKeyboardLanguage() {
+  setKeyboardLanguage(keyboardLanguage === "ko" ? "en" : "ko");
+}
+
+function isLanguageToggleKey(event) {
+  return event.code === "Lang1"
+    || event.key === "HangulMode"
+    || event.key === "Hangul";
+}
+
+function flashVirtualKey(button) {
+  button.classList.add("is-pressed");
+  window.setTimeout(() => button.classList.remove("is-pressed"), 110);
+}
+
+function handleVirtualKey(code, button) {
+  playTypingSound();
+  flashVirtualKey(button);
+
+  if (code === "Shift") {
+    virtualShift = !virtualShift;
+    setKeyboardLanguage(keyboardLanguage, false);
+    return;
+  }
+
+  if (code === "Enter") {
+    sendMessage();
+    typingInput.focus({ preventScroll: true });
+    return;
+  }
+
+  if (code === "Space") {
+    insertVirtualText(" ");
+    return;
+  }
+
+  const character = activeVirtualLayout()[code];
+  if (!character) return;
+
+  if (keyboardLanguage === "ko" && koreanLayout[code]) {
+    insertKoreanJamo(character);
+  } else {
+    insertVirtualText(character);
+  }
+
+  if (virtualShift) {
+    virtualShift = false;
+    setKeyboardLanguage(keyboardLanguage);
+  }
+}
+
+function initializeVirtualKeyboard() {
+  keyboardRows.forEach((row, rowIndex) => {
+    const codes = keyCodesByRow[rowIndex];
+    [...row.children].forEach((element, index) => {
+      const code = codes[index];
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "key " + code;
+      button.dataset.keyCode = code;
+      button.addEventListener("click", () => handleVirtualKey(code, button));
+      element.replaceWith(button);
+      virtualKeys.set(code, button);
+    });
+  });
+
+  languageKey = document.createElement("button");
+  languageKey.type = "button";
+  languageKey.className = "key language-key";
+  languageKey.addEventListener("click", () => {
+    playTypingSound();
+    flashVirtualKey(languageKey);
+    toggleKeyboardLanguage();
+    typingInput.focus({ preventScroll: true });
+  });
+
+  const shiftKey = virtualKeys.get("Shift");
+  shiftKey?.after(languageKey);
+  setKeyboardLanguage("ko");
+}
+
 function animateSendButton() {
   sendButton.classList.remove("is-bouncing");
   void sendButton.offsetWidth;
@@ -374,6 +615,12 @@ function updateViewport() {
   updateTypingFieldWidth();
   requestAnimationFrame(syncTypingScroll);
 }
+
+initializeVirtualKeyboard();
+sendButton.addEventListener("click", () => {
+  sendMessage();
+  typingInput.focus({ preventScroll: true });
+});
 
 renderSentence();
 updateStats();
@@ -479,6 +726,10 @@ function sendMessage() {
 }
 
 function getKeyboardKey(event) {
+  if (isLanguageToggleKey(event)) {
+    return languageKey;
+  }
+
   if (event.key === "Shift") {
     return document.querySelector(".Shift");
   }
@@ -489,6 +740,10 @@ function getKeyboardKey(event) {
 document.addEventListener("keydown", (event) => {
   if (!event.repeat) {
     playTypingSound();
+  }
+
+  if (isLanguageToggleKey(event) && !event.repeat) {
+    toggleKeyboardLanguage();
   }
 
   const k = getKeyboardKey(event);

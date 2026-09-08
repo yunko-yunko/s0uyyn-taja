@@ -293,9 +293,44 @@ main {
   font-family: 'Suit', sans-serif;
 }
 
-.Enter,
+button.key {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.Enter { flex-grow: 1.45; }
+
 .Shift {
-  flex-grow: 1.5;
+  flex-grow: 1.05;
+  font-size: 13px;
+}
+
+.language-key {
+  flex-grow: 1.18;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.Space { flex-grow: 4.8; }
+
+.keyboard-controls {
+  margin-top: 1px;
+  margin-bottom: 3px;
+}
+
+.keyboard-letter-row {
+  width: 68%;
+  max-width: 252px;
+}
+
+.keyboard-controls .key {
+  height: 32px;
+  line-height: 32px;
 }
 
 .homebar {
@@ -308,6 +343,7 @@ main {
 }
 
 .key.is-pressed { background-color: #a9adb1; }
+.key.is-shifted { background-color: #ded0f5; }
 
 .typing-field {
   --send-space: 56px;
@@ -407,7 +443,8 @@ main {
   font-size: 24px;
   line-height: 1;
   font-weight: 700;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   color: transparent;
   background: linear-gradient(135deg, #7b2cbf, #b5179e, #f72585);
   background-clip: text;
@@ -494,6 +531,7 @@ body.dark-mode .message.received { color: #f4f4f5; background: #302e36; }
 body.dark-mode .keyboard { background-color: #2a2930; }
 body.dark-mode .key { color: #f4f4f5; background-color: #414049; }
 body.dark-mode .key.is-pressed { background-color: #686570; }
+body.dark-mode .key.is-shifted { background-color: #684888; }
 body.dark-mode .homebar { background-color: #9a98a3; }
 body.dark-mode .keyboard .stats p,
 body.dark-mode .keyboard .stats strong { color: #d0cdd6; }
@@ -547,6 +585,7 @@ body.dark-mode .keyboard .stats p:not(:last-child)::after { color: #92909a; }
   .keyboard .stats { min-height: 34px; margin-bottom: 4px; }
   .typing-zone { gap: 4px; margin-bottom: 4px; }
   .key { height: 32px; line-height: 32px; }
+  .keyboard-controls .key { height: 28px; line-height: 28px; }
   .homebar { margin-top: 8px; }
 }
 
@@ -565,6 +604,7 @@ body.dark-mode .keyboard .stats p:not(:last-child)::after { color: #92909a; }
   .keyboard .stats { min-height: 32px; padding: 2px 0; }
   .typing-zone { margin-bottom: 3px; }
   .key { height: 24px; line-height: 24px; font-size: 13px; }
+  .keyboard-controls .key { height: 22px; line-height: 22px; }
   .homebar { margin-top: 5px; height: 3px; }
 }
 
