@@ -55,6 +55,7 @@ const bestSpeed = document.getElementById("best-speed");
 const accuracy = document.getElementById("accuracy");
 const sendButton = document.querySelector(".send-button");
 const typingField = document.querySelector(".typing-field");
+const appFrame = document.querySelector("main");
 const chatHistory = document.getElementById("chat-history");
 const themeToggle = document.getElementById("theme-toggle");
 const textMeasureContext = document.createElement("canvas").getContext("2d");
@@ -64,7 +65,7 @@ const keyCodesByRow = [
   ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP"],
   ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL"],
   ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM"],
-  ["Shift", "Space", "Enter"],
+  ["Shift", "Space", "Backspace", "Enter"],
 ];
 const koreanLayout = {
   KeyQ: "ㅂ", KeyW: "ㅈ", KeyE: "ㄷ", KeyR: "ㄱ", KeyT: "ㅅ",
@@ -120,6 +121,7 @@ let feedbackFrame = 0;
 const pendingFeedbackIndices = new Set();
 const feedbackCharacters = new Map();
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const coarsePointer = window.matchMedia("(pointer: coarse)");
 const typingEffects = document.createElement("div");
 typingEffects.className = "typing-effects";
 typingEffects.setAttribute("aria-hidden", "true");
@@ -335,14 +337,23 @@ function splitSyllable(character) {
   };
 }
 
-function updateVirtualInput(value, caret, data) {
+function focusTypingInput() {
+  if (coarsePointer.matches) {
+    typingInput.blur();
+    return;
+  }
+
+  typingInput.focus({ preventScroll: true });
+}
+
+function updateVirtualInput(value, caret, data, inputType = "insertText") {
   typingInput.value = value;
   typingInput.setSelectionRange(caret, caret);
   const inputEvent = typeof InputEvent === "function"
-    ? new InputEvent("input", { bubbles: true, inputType: "insertText", data })
+    ? new InputEvent("input", { bubbles: true, inputType, data })
     : new Event("input", { bubbles: true });
   typingInput.dispatchEvent(inputEvent);
-  typingInput.focus({ preventScroll: true });
+  focusTypingInput();
 }
 
 function insertKoreanJamo(jamo) {
@@ -403,6 +414,25 @@ function insertVirtualText(text) {
   updateVirtualInput(nextValue, start + text.length, text);
 }
 
+function deleteVirtualCharacter() {
+  const start = typingInput.selectionStart;
+  const end = typingInput.selectionEnd;
+  const value = typingInput.value;
+
+  if (start !== end) {
+    const nextValue = value.slice(0, start) + value.slice(end);
+    updateVirtualInput(nextValue, start, null, "deleteContentBackward");
+    return;
+  }
+
+  const before = Array.from(value.slice(0, start));
+  const removed = before.pop();
+  if (!removed) return;
+  const nextBefore = before.join("");
+  const nextValue = nextBefore + value.slice(start);
+  updateVirtualInput(nextValue, nextBefore.length, null, "deleteContentBackward");
+}
+
 function activeVirtualLayout() {
   const latin = virtualShift ? shiftedEnglishLayout : englishLayout;
   if (keyboardLanguage === "en") return latin;
@@ -425,6 +455,10 @@ function setKeyboardLanguage(language, resetShift = true) {
     }
     if (code === "Space") {
       button.textContent = "space";
+      return;
+    }
+    if (code === "Backspace") {
+      button.textContent = "⌫";
       return;
     }
     button.textContent = layout[code] ?? "";
@@ -466,7 +500,12 @@ function handleVirtualKey(code, button) {
 
   if (code === "Enter") {
     sendMessage();
-    typingInput.focus({ preventScroll: true });
+    focusTypingInput();
+    return;
+  }
+
+  if (code === "Backspace") {
+    deleteVirtualCharacter();
     return;
   }
 
@@ -512,7 +551,7 @@ function initializeVirtualKeyboard() {
     playTypingSound();
     flashVirtualKey(languageKey);
     toggleKeyboardLanguage();
-    typingInput.focus({ preventScroll: true });
+    focusTypingInput();
   });
 
   const shiftKey = virtualKeys.get("Shift");
@@ -586,12 +625,29 @@ function renderSentence() {
 }
 
 function updateTypingFieldWidth() {
-  const sentenceStyle = getComputedStyle(sentence);
+  typingField.style.removeProperty("--typing-font-size");
+  let sentenceStyle = getComputedStyle(sentence);
   textMeasureContext.font = sentenceStyle.font;
-  const sentenceWidth = textMeasureContext.measureText(sentence.textContent).width;
   const horizontalPadding = parseFloat(sentenceStyle.paddingLeft)
     + parseFloat(sentenceStyle.paddingRight);
   const sendSpace = parseFloat(getComputedStyle(typingField).getPropertyValue("--send-space")) || 56;
+  let sentenceWidth = textMeasureContext.measureText(sentence.textContent).width;
+
+  if (coarsePointer.matches) {
+    const availableWidth = Math.min(
+      appFrame.getBoundingClientRect().width - 16,
+      window.innerWidth - 16,
+    ) - sendSpace - horizontalPadding;
+    const fontSize = parseFloat(sentenceStyle.fontSize);
+    const fittedFontSize = Math.floor(fontSize * Math.min(1, availableWidth / sentenceWidth));
+
+    if (fittedFontSize < fontSize) {
+      typingField.style.setProperty("--typing-font-size", String(Math.max(8, fittedFontSize)) + "px");
+      sentenceStyle = getComputedStyle(sentence);
+      textMeasureContext.font = sentenceStyle.font;
+      sentenceWidth = textMeasureContext.measureText(sentence.textContent).width;
+    }
+  }
 
   typingField.style.setProperty("--sentence-width", `${Math.ceil(Math.max(480, sentenceWidth + horizontalPadding + sendSpace + 2))}px`);
 }
@@ -619,7 +675,7 @@ function updateViewport() {
 initializeVirtualKeyboard();
 sendButton.addEventListener("click", () => {
   sendMessage();
-  typingInput.focus({ preventScroll: true });
+  focusTypingInput();
 });
 
 renderSentence();
