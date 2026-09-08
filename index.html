@@ -3,22 +3,116 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>한글 타자연습</title>
-    <link rel="stylesheet", href="./style.css">
+    <title>최서윤 타자연습</title>
+    <link rel="stylesheet" href="./style.css">
   </head>
   <body>
     <main>
-      <h1>서윤이의 타자연습</h1>
-      <p>문장을 따라 입력하세요. Enter를 누르면 다음 문장으로 넘어갑니다.</p>
-      <section class="stats" aria-label="타자 기록">
-        <p>평균 타수 <strong id="average-speed">0</strong> 타/분</p>
-        <p>최고 타수 <strong id="best-speed">0</strong> 타/분</p>
-        <p>정확도 <strong id="accuracy">0</strong>%</p>
-      </section>
-      <p id="sentence" aria-live="polite"></p>
-      <label for="typing-input">문장 입력</label>
-      <input id="typing-input" type="text" autocomplete="off" autofocus />
+      <header class="dm-header">
+        <button class="header-icon back-icon" type="button" aria-label="뒤로가기">‹</button>
+        <div class="dm-avatar" aria-hidden="true">
+          <svg class="person-icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M5.5 20c.6-4 3.1-6 6.5-6s5.9 2 6.5 6" />
+          </svg>
+        </div>
+        <div class="dm-profile">
+          <strong>서윤</strong>
+        </div>
+        <div class="dm-actions">
+          <svg class="dm-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8.5 4.5 6.7 6.3c-.5.5-.6 1.2-.2 1.8a16.5 16.5 0 0 0 9.4 9.4c.6.3 1.3.2 1.8-.2l1.8-1.8-3.1-3.1-1.6 1.2a12.5 12.5 0 0 1-4.4-4.4l1.2-1.6z" />
+          </svg>
+          <svg class="dm-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="6" width="12" height="12" rx="2" />
+            <path d="m15 10 5-3v10l-5-3z" />
+          </svg>
+          <button id="theme-toggle" class="theme-toggle" type="button" aria-label="다크 모드 켜기" aria-pressed="false">
+            <span></span>
+          </button>
+        </div>
+      </header>
+      <section id="chat-history" class="chat-history" aria-label="대화 내용" aria-live="polite"></section>
+      <div class="typing-field">
+        <p id="sentence" aria-live="polite"></p>
+        <textarea
+          id="typing-input"
+          autocomplete="off"
+          aria-label="문장을 입력하세요"
+          rows="1"
+          wrap="off"
+          enterkeyhint="send"
+          spellcheck="false"
+          autocapitalize="off"
+        ></textarea>
+        <button class="send-button" type="button" aria-label="Send">➤</button>
+      </div>
+
+      <div class="keyboard">
+        <section class="stats" aria-label="타자 기록">
+          <p>평균 타수 <strong id="average-speed">0</strong> 타/분</p>
+          <p>최고 타수 <strong id="best-speed">0</strong> 타/분</p>
+          <p>평균 정확도 <strong id="accuracy">0</strong>%</p>
+        </section>
+        <div class="typing-zone">
+          <div class="key Digit1">1</div>
+          <div class="key Digit2">2</div>
+          <div class="key Digit3">3</div>
+          <div class="key Digit4">4</div>
+          <div class="key Digit5">5</div>
+          <div class="key Digit6">6</div>
+          <div class="key Digit7">7</div>
+          <div class="key Digit8">8</div>
+          <div class="key Digit9">9</div>
+          <div class="key Digit0">0</div>
+        </div>
+
+        <div class="typing-zone">
+          <div class="key Key!">ㅂ</div>
+          <div class="key KeyW">ㅈ</div>
+          <div class="key KeyE">ㄷ</div>
+          <div class="key KeyR">ㄱ</div>
+          <div class="key KeyT">ㅅ</div>
+          <div class="key KeyY">ㅛ</div>
+          <div class="key KeyU">ㅕ</div>
+          <div class="key KeyI">ㅑ</div>
+          <div class="key KeyO">ㅐ</div>
+          <div class="key KeyP">ㅔ</div>
+        </div>
+
+        <!-- 두 번째 줄 (A ~ L) -->
+        <div class="typing-zone">
+          <div class="key KeyA">ㅁ</div>
+          <div class="key KeyS">ㄴ</div>
+          <div class="key KeyD">ㅇ</div>
+          <div class="key KeyF">ㄹ</div>
+          <div class="key KeyG">ㅎ</div>
+          <div class="key KeyH">ㅗ</div>
+          <div class="key KeyJ">ㅓ</div>
+          <div class="key KeyK">ㅏ</div>
+          <div class="key KeyL">ㅣ</div>
+        </div>
+
+        <!-- 세 번째 줄 (Z ~ M) -->
+        <div class="typing-zone">
+          <div class="key Shift">Shift</div>
+          <div class="key KeyZ">ㅋ</div>
+          <div class="key KeyX">ㅌ</div>
+          <div class="key KeyC">ㅊ</div>
+          <div class="key KeyV">ㅍ</div>
+          <div class="key KeyB">ㅠ</div>
+          <div class="key KeyN">ㅜ</div>
+          <div class="key KeyM">ㅡ</div>
+          <div class="key Enter">enter</div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+
     </main>
+    <aside class="whale-brand" aria-label="울산큰고래지킴이협회">
+      <img src="assets/whale-logo.png" alt="고래 로고" />
+      <span>울산큰고래지킴이협회</span>
+    </aside>
     <script src="script.js" defer></script>
   </body>
 </html>
